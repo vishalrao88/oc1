@@ -8,6 +8,9 @@ Jetson reads serial data from USB and controls steering servos according to the 
   Mode 2: Fly by Wire. pass thru RC signals to steer and throttle servos
   Mode 3: Autonomous. Steering angle auto-set to pan servo. Throttle is fly by wire (RC/human control)
 
+Software:
+oc11.py has python code to run on Jetson Nano
+.ino has C code to run on ESP32
 
 Hardware:
 NVIDIA Jetson Nano
