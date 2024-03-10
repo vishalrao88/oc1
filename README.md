@@ -1,4 +1,4 @@
-This project uses a Jetson Nano and ESP32 on a 1:10 RC Crawler with steering and ESC throttle control
+This project uses a Jetson Nano on a RC car to point a turret and drive towards a person detected on its camera. 
 
 The Jetson uses Nvidia captures video from a pre-trained models like TAO peoplenet-pruned object detection network
 Jetson points pan-tilt servos (turret) to first person detected
