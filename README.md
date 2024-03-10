@@ -10,7 +10,7 @@ Jetson reads serial data from USB and controls steering servos according to the 
 
 Software:
 oc11.py has python code to run on Jetson Nano
-.ino has C code to run on ESP32
+esp32ReadPWM.ino has C code to run on ESP32
 
 Hardware:
 NVIDIA Jetson Nano
