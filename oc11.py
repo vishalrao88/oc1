@@ -69,19 +69,19 @@ def movePanTilt(targetX, targetY, panMin=35, panMax=145, tiltMin=15, tiltMax=90)
     
     if(panOut>=panMax):
         panOut=panMax
-        print("At pan bound "+str(panOut))
+        #print("At pan bound "+str(panOut))
 
     if(panOut<=panMin):
         panOut=panMin
-        print("At pan bound "+str(panOut))
+        #print("At pan bound "+str(panOut))
 
     if(tiltOut>=tiltMax):
         tiltOut=tiltMax
-        print("At tilt bound "+str(tiltOut))
+        #print("At tilt bound "+str(tiltOut))
 
     if(tiltOut<=tiltMin):
         tiltOut=tiltMin
-        print("At tilt bound "+str(tiltOut))
+        #print("At tilt bound "+str(tiltOut))
 
     myKit.servo[1].angle=panOut
     myKit.servo[0].angle=tiltOut
@@ -184,7 +184,7 @@ try:
         if img is None: # capture timeout
             continue
 
-        
+        """
         if(counter==frameskip):
             counter=0
             print("skipping loop")
@@ -192,7 +192,7 @@ try:
             current_time = datetime.datetime.now()
             print("Current time:", current_time)
             continue
-
+        """
         detections = net.Detect(img)
 
         detectcount=0
@@ -217,7 +217,7 @@ try:
             ## Play audio file with mpv.
             #subprocess.run(['mpv', audio_target_aquired])
 
-            print(item,top,left,bottom,right)
+            #print(item,top,left,bottom,right)
 
             targetX=(right+left)/2.0
             targetY=top
@@ -231,10 +231,6 @@ try:
             break
     
     
-        display.Render(img)
-        display.SetStatus("Object Detection | Network {:.0f} FPS".format(net.GetNetworkFPS()))
-
-
 
         ## Read and decode serial input from esp32/arduino
 
@@ -251,26 +247,26 @@ try:
                 rcchannel = rcchannel.strip()
                 rcvalue = int(rcvalue.strip())
                 rcvalues[rcchannel] = rcvalue
-            print("Signal:", rcvalues)
+            #print("Signal:", rcvalues)
 
             ## MODE 1
             if (rcvalues['Ch3']<1000): ## NEED TO DEFAULT TO CH 3 <1000 = default
                 rcmode='default'
-                print("Mode: ", rcmode)
+                #print("Mode: ", rcmode)
                 
 
             ## MODE 2
             if 1200 <= rcvalues['Ch3'] <= 1600:
                 rcmode = 'Fly By Wire'
-                print("Mode: ", rcmode)
+                #print("Mode: ", rcmode)
 
-                steer=180-mapPWMtoAngle(rcvalues['Ch1'])
+                steer = 180 - mapPWMtoAngle(rcvalues['Ch1'])
                 
-                myKit.servo[4].angle=steer
+                myKit.servo[4].angle = steer
 
                 throttle=mapPWMtoThrottle(rcvalues['Ch2'])
-                print("Throttle", throttle)
-                myKit.continuous_servo[5].throttle=throttle
+                #print("Throttle", throttle)
+                myKit.continuous_servo[5].throttle = throttle
 
 
 
@@ -279,6 +275,19 @@ try:
             if (rcvalues['Ch3']>2000):
                 rcmode='Auto'
                 print("Mode: ", rcmode)
+
+                # steer angle set to pan angle
+                steer = 180 - pback
+                
+                myKit.servo[4].angle = steer
+
+                throttle=mapPWMtoThrottle(rcvalues['Ch2'])
+                #print("Throttle", throttle)
+                myKit.continuous_servo[5].throttle = throttle
+
+
+        display.Render(img)
+        display.SetStatus("Object Detection | Network {:.0f} FPS".format(net.GetNetworkFPS()))
 
 
 
