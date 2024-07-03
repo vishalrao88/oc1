@@ -29,6 +29,48 @@ import subprocess
 
 
 
+## PARAMETERS AND VARIABLES
+
+## Set the network model used to process video
+#detectnet peoplenet-pruned that came with the jetson sdk
+net = detectNet(model="peoplenet-pruned", threshold=0.5)
+#net = detectNet("ssd-mobilenet-v2", threshold=0.5)
+
+
+#Getting video source and out using nvidia utils 
+#camera = videoSource("/dev/video0",["--input-width=640", "--input-height=480"])      # '/dev/video0' for V4L2
+camera = videoSource("/dev/video0", ["--input-width=640","--input-height=480", "--codec=h264", "--input-decoder=omx"])  # '/dev/video0' for V4L2
+
+#pipeline = "v4l2src device=/dev/video0 ! video/x-h264,width=640,height=480,framerate=30/1 ! h264parse ! nvv4l2decoder ! nvvidconv ! video/x-raw(memory:NVMM),format=RGBA ! nvvidconv ! video/x-raw,width=640,height=480,format=BGRx ! videoconvert"
+#camera = videoSource(pipeline)
+
+
+
+display = videoOutput("display://0") 
+
+
+
+
+#audio file locations
+audio_target_aquired = "/home/jetson/dev/contalarm.wav"
+audio_proximity_warning="/home/jetson/dev/3beeps.wav"
+
+audio_process = subprocess.Popen(['aplay', audio_proximity_warning], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+# Initialize serial connection Serial 
+arduino = serial.Serial(
+    port='/dev/ttyUSB0',
+    baudrate=921600,
+    bytesize=serial.EIGHTBITS,
+    parity=serial.PARITY_NONE,
+    stopbits=serial.STOPBITS_ONE,
+    timeout=5,
+    xonxoff=False,
+    rtscts=False,
+    dsrdtr=False,
+    writeTimeout=2
+)
+
 ## FUNCTIONS
 
 
@@ -104,39 +146,6 @@ def mapPWMtoAngle(value, in_min=987, in_max=2012, out_min=20, out_max=160):
     return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 
 
-
-## PARAMETERS AND VARIABLES
-
-## Set the network model used to process video
-#detectnet peoplenet-pruned that came with the jetson sdk
-net = detectNet(model="peoplenet-pruned", threshold=0.5)
-#net = detectNet("ssd-mobilenet-v2", threshold=0.5)
-
-
-#Getting video source and out using nvidia utils 
-camera = videoSource("/dev/video0",["--input-width=640", "--input-height=480"])      # '/dev/video0' for V4L2
-display = videoOutput("display://0") # 'my_video.mp4' for file
-
-
-#audio file locations
-audio_target_aquired = "/home/jetson/dev/contalarm.wav"
-audio_proximity_warning="/home/jetson/dev/3beeps.wav"
-
-audio_process = subprocess.Popen(['aplay', audio_proximity_warning], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-# Initialize serial connection Serial 
-arduino = serial.Serial(
-    port='/dev/ttyUSB0',
-    baudrate=921600,
-    bytesize=serial.EIGHTBITS,
-    parity=serial.PARITY_NONE,
-    stopbits=serial.STOPBITS_ONE,
-    timeout=5,
-    xonxoff=False,
-    rtscts=False,
-    dsrdtr=False,
-    writeTimeout=2
-)
 
 #start the servo driver
 myKit=ServoKit(channels=16)
@@ -261,9 +270,7 @@ try:
                 rcchannel = rcchannel.strip()
                 rcvalue = int(rcvalue.strip())
                 rcvalues[rcchannel] = rcvalue
-            print("Signal:", rcvalues)
-            if len(rcvalues)!=5:
-                continue
+            #print("Signal:", rcvalues)
 
             ## MODE 1
             if (rcvalues['Ch3']<1000): 
@@ -277,7 +284,6 @@ try:
                 #print("Mode: ", rcmode)
                 #print("Distance: ", rcvalues['Dist'])
                 distance=rcvalues['Dist']
-                #distance=100
                 if (distance<50): 
                     audio_process.poll()  # Check if the subprocess has finished
                     if audio_process.returncode is not None:  # If the subprocess has finished, restart it
@@ -306,7 +312,7 @@ try:
                 print("Mode: ", rcmode)
 
                 distance=rcvalues['Dist']
-                #distance=100
+                
                 if (distance<50):
                     
                     audio_process.poll()  # Check if the subprocess has finished
@@ -335,7 +341,6 @@ try:
 
 except Exception as e:
     print(e)
-    print("An exception occurred: " + repr(e))
-    print("Exception message: " + str(e))
+    traceback.print_exc()
 finally:
     arduino.close()
