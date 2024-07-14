@@ -36,6 +36,7 @@ try:
     #set servos to default deg
     myKit.servo[0].angle=45
     myKit.servo[1].angle=90
+    myKit.servo[4].angle=90
 
     #FOV CALIBRATION
     pan0=35
@@ -127,6 +128,7 @@ try:
         myKit.servo[1].angle=pout
         myKit.servo[0].angle=tout
 
+        myKit.servo[4].angle=pout
 
 
         #time.sleep(1)
@@ -159,4 +161,6 @@ except Exception as e:
 finally:  
     myKit.servo[0].angle=90
     myKit.servo[1].angle=90
+    myKit.servo[4].angle=90
+    myKit.continuous_servo[5].throttle = 0
     print("cleaned final")

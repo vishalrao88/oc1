@@ -20,12 +20,14 @@ Ch3 is Mode. Mode 1 = Do nothing. Mode 2 = Fly by wire. Mode 3 = Autonomous
 """
 
 import serial
+import traceback
+
 #import time
 from adafruit_servokit import ServoKit
 #from jetson_inference import detectNet
 #from jetson_utils import videoSource, videoOutput
-#import datetime
-#import subprocess
+import datetime
+import subprocess
 
 
 #import sys
@@ -35,6 +37,20 @@ from yoloDet import YoloTRT
 
 
 ## FUNCTIONS
+
+def tgtfound():
+    
+
+    if state!="tgtfound":
+        now = datetime.now()
+        print("New target found", now)
+        now=False
+
+    else:
+        print("tracking")
+
+
+
 
 
 def detectPerson(detections, class_label='person', confidence_threshold=0.5):
@@ -120,7 +136,7 @@ def mapPWMtoAngle(value, in_min=987, in_max=2012, out_min=20, out_max=160):
 # use path for library and engine file
 #model = YoloTRT(library="/home/jetson/dev/exp/tensorrtx/yolov5/build/libmyplugins.so", engine="/home/jetson/dev/exp/tensorrtx/yolov5/build/yolov5n.engine", conf=0.5, yolo_ver="v5")
 
-model = YoloTRT(library="/home/jetson/dev/oc1/libmyplugins.so", engine="/home/jetson/dev/oc1/yolov5n.engine", conf=0.5, yolo_ver="v5")
+model = YoloTRT(library="/home/jetson/dev/oc1/models/libmyplugins.so", engine="/home/jetson/dev/oc1/models/yolov5n.engine", conf=0.5, yolo_ver="v5")
 
 #cap = cv2.VideoCapture("videos/testvideo.mp4")
 
@@ -212,6 +228,9 @@ try:
         #22 img = camera.Capture()
 
         ret, frame = cap.read()
+        if not ret:
+            continue
+
         #frame = imutils.resize(frame, width=640)
         detections, t = model.Inference(frame)
         # for obj in detections:
@@ -328,7 +347,7 @@ try:
                 #print("Mode: ", rcmode)
                 #print("Distance: ", rcvalues['Dist'])
                 distance=rcvalues['Dist1']
-                distance=100
+                
                 if (distance<50): 
                     print("PROXIMITY")
                     #audio_process.poll()  # Check if the subprocess has finished
@@ -392,8 +411,11 @@ try:
 
 except Exception as e:
     print(e)
-    print("An exception occurred: " + repr(e))
-    print("Exception message: " + str(e))
+    traceback.print_exc()
+    print("Cutting throttle")
+    myKit.continuous_servo[5].throttle = 0
+    print("done cutting throttle")
+
 finally:
     arduino.close()
     cap.release()

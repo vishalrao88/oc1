@@ -127,7 +127,7 @@ counter=0
 
 
 
-# Loop on the python windo staying open
+# Loop on the python window staying open
 while display.IsStreaming():
     
     img = camera.Capture()

@@ -276,8 +276,8 @@ try:
                 rcmode = 'Fly By Wire'
                 #print("Mode: ", rcmode)
                 #print("Distance: ", rcvalues['Dist'])
-                distance=rcvalues['Dist']
-                #distance=100
+                distance=rcvalues['Dist1']
+                distance=100
                 if (distance<50): 
                     audio_process.poll()  # Check if the subprocess has finished
                     if audio_process.returncode is not None:  # If the subprocess has finished, restart it
@@ -305,7 +305,7 @@ try:
                 rcmode='Auto'
                 print("Mode: ", rcmode)
 
-                distance=rcvalues['Dist']
+                distance=rcvalues['Dist1']
                 #distance=100
                 if (distance<50):
                     

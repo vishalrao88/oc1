@@ -26,7 +26,7 @@ cam.set(cv2.CAP_PROP_FRAME_HEIGHT, dispH)
 #while display.IsOpen():
 while True:
     #img, width, height= cam.CaptureRGBA()
-    _,img = cam.read()
+    _, img = cam.read()
     height=img.shape[0]
     width=img.shape[1]
 
