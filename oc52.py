@@ -32,16 +32,9 @@ from ultralytics import YOLO
 #import torch
 import traceback
 
-
 ## PARAMETERS AND VARIABLES
 
-## Set the network model used to process video
-#detectnet peoplenet-pruned that came with the jetson sdk
-#net = detectNet(model="peoplenet-pruned", threshold=0.5)
-#net = detectNet("ssd-mobilenet-v2", threshold=0.5)
-#torch.cuda.set_device(0)
-model_path = "yolov8s.pt"
-
+model_path = "yolov8n.onnx"
 try:
     model = YOLO(model_path)
 except Exception as e:
@@ -51,31 +44,14 @@ except Exception as e:
 source=0
 print("Running inference on source:", source)
 
-
-
-#Getting video source and out using nvidia utils 
-#camera = videoSource("/dev/video0",["--input-width=640", "--input-height=480"])      # '/dev/video0' for V4L2
-#15#camera = videoSource("/dev/video0", ["--input-width=640","--input-height=480", "--codec=h264", "--input-decoder=omx"])  # '/dev/video0' for V4L2
-
-#pipeline = "v4l2src device=/dev/video0 ! video/x-h264,width=640,height=480,framerate=30/1 ! h264parse ! nvv4l2decoder ! nvvidconv ! video/x-raw(memory:NVMM),format=RGBA ! nvvidconv ! video/x-raw,width=640,height=480,format=BGRx ! videoconvert"
-#camera = videoSource(pipeline)
-
-
-
-##15 display = videoOutput("display://0") 
-
-
-
-
 #audio file locations
 #15a audio_target_aquired = "/home/jetson/dev/contalarm.wav"
 #15a audio_proximity_warning="/home/jetson/dev/3beeps.wav"
-
 #15a audio_process = subprocess.Popen(['aplay', audio_proximity_warning], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 # Initialize serial connection Serial 
 arduino = serial.Serial(
-    port='COM5',
+    port='COM3',
     baudrate=921600,
     bytesize=serial.EIGHTBITS,
     parity=serial.PARITY_NONE,
@@ -88,12 +64,13 @@ arduino = serial.Serial(
 )
 
 ## FUNCTIONS
-
 def read_latest_serial_data(serial_port):
+    print("heloo")
     latest_data = ""
     while serial_port.in_waiting > 0:
-        line = serial_port.readline().decode().strip()  # Read a line from the buffer
+        line = serial_port.readline().decode().strip()  # Rd a line from the buffer
         latest_data = line  # Update latest_data with the most recent line
+    print("lastdata:",latest_data)
     return latest_data
 
 
@@ -143,7 +120,6 @@ def movePanTilt(targetX, targetY, panMin=20, panMax=160, tiltMin=15, tiltMax=90)
     return panOut, tiltOut
     ## END OF movePanTilt
 
-
 def mapPWMtoThrottle(value, in_min=987, in_max=2012, out_min=-1, out_max=1):
     return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 
@@ -168,7 +144,7 @@ ybound=480
 targetX=320
 targetY=240
 
-#Default pan and tile settings
+#Default pan and tilt settings
 panOut=90
 tiltOut=40
 
@@ -197,16 +173,19 @@ RC Control
 """
 
 try:
+    arduino.reset_input_buffer()
     results = model(source, save=False, stream=True, imgsz=640, show=True, project=False, conf=0.5)
 
     for result in results:
         counter += 1
 
+        """
         # Skip frames if needed
         if counter == frameskip:
             counter = 0
             continue
-        
+        """
+            
         detectcount = 0
         pback = 90
         tback = 0
@@ -226,6 +205,13 @@ try:
             targetX = (right + left) / 2.0
             targetY = top
             pback, tback = movePanTilt(targetX, targetY, 35, 145, 15, 90)
+
+            ws="1200|1200|1200|1200\n"
+            ##ws=""+pback+"|"+tback+"|1500|1500\n"
+            #ws = "" + str(tback) + "|" + str(pback) + "|1500|1500\n"
+
+
+            arduino.write(ws.encode())
             break  # Exit loop if person is found
         
         # Read and decode serial input from ESP32/Arduino
@@ -233,6 +219,7 @@ try:
         if arduino.in_waiting > 0:
             #52 rcdata = arduino.readline().decode().strip()
             rcdata = read_latest_serial_data(arduino)
+            print(rcdata)
             channel_readings = rcdata.split('|')
             if len(channel_readings) != 5:
                 print("Bad Data")
