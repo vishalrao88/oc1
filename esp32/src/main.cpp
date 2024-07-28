@@ -45,20 +45,6 @@ long a;
 uint8_t cc=60;
 
 
-void handleCommand(String command) {
-  command.trim();
-  if (command.startsWith("servo1:")) {
-    int position = command.substring(7).toInt();
-    //setServoPosition(0, position); // Control servo 1
-  } else if (command.startsWith("servo2:")) {
-    int position = command.substring(7).toInt();
-    //setServoPosition(1, position); // Control servo 2
-  } else if (command == "getDistance") {
-    Serial.print("Distance:");
-    Serial.println(a);
-  }
-}
-
 void parseComm(const std::string &str, std::string pcComm[], size_t &count) {
     count = 0;
     size_t start = 0;
@@ -150,10 +136,15 @@ if (_raw_rc_values[2] <= 1000) {
 if (directModeActive) {
     pwm.writeMicroseconds(4, _raw_rc_values[0]); // steer
     pwm.writeMicroseconds(5, _raw_rc_values[1]); // throttle
+    Serial.println("1999");
+}
+else
+{
+  Serial.println("2999");
 }
 
 
-  Serial.println("199");
+  
   // Handle incoming serial commands from the PC
   if (Serial.available()) {
     serialString = Serial.readStringUntil('\n'); // Read input as Arduino String
@@ -170,18 +161,22 @@ if (directModeActive) {
     angle = std::stoi(pcComm[0].c_str());
     us=angle2us(angle);
     pwm.writeMicroseconds(0,us);
-
+    
     angle = std::stoi(pcComm[1].c_str());
     us=angle2us(angle);
     pwm.writeMicroseconds(1,us);
+    
 
-    angle = std::stoi(pcComm[2].c_str());
-    us=angle2us(angle);
-    pwm.writeMicroseconds(4,us);
+    if(pcCommCount>2){
+      angle = std::stoi(pcComm[2].c_str());
+      //us=angle2us(angle);
+      pwm.writeMicroseconds(4,angle);
 
-    angle = std::stoi(pcComm[3].c_str());
-    us=angle2us(angle);
-    pwm.writeMicroseconds(5,us);
+      angle = std::stoi(pcComm[3].c_str());
+      //us=angle2us(angle);
+      pwm.writeMicroseconds(5,angle);
+    }
+
 
     // Optional: Print parsed command parts for debugging
     /*

@@ -59,19 +59,13 @@ def mapPWMtoAngle(value, in_min=987, in_max=2012, out_min=20, out_max=160):
 xbound = 640
 ybound = 480
 
-frameskip = 10
-counter = 0
-
 try:
     arduino.reset_input_buffer()
     results = model(source, save=False, stream=True, imgsz=640, show=True, project=False, conf=0.5)
 
     for result in results:
-        counter += 1
+        #counter += 1
 
-        if counter == frameskip:
-            counter = 0
-            continue
 
         detectcount = 0
         pback = 90
@@ -91,8 +85,7 @@ try:
             targetY = top
             pback, tback = movePanTilt(targetX, targetY, 35, 145, 15, 90)
 
-            ws = f"{int(tback)}|{int(pback)}|1500|1500\n"
-            arduino.write(ws.encode())
+            
             break  # Exit loop if person is found
 
         if arduino.in_waiting > 0:
@@ -114,17 +107,24 @@ try:
 
             ch3_value = rcvalues.get('Ch3', 0)
             dist = rcvalues.get('Dist1', 0)
-            steer = 180 - mapPWMtoAngle(rcvalues.get('Ch1', 0))
-            throttle = mapPWMtoThrottle(rcvalues.get('Ch2', 0))
+            #steer = 180 - mapPWMtoAngle(rcvalues.get('Ch1', 0))
+            #throttle = mapPWMtoThrottle(rcvalues.get('Ch2', 0))
 
             if ch3_value < 1000:
                 rcmode = 'default'
+                ws = f"{int(tback)}|{int(pback)}\n"
+                arduino.write(ws.encode())
+
             elif 1200 <= ch3_value <= 1600:
                 rcmode = 'Fly By Wire'
+                ws = f"{int(tback)}|{int(pback)}|{int(rcvalues.get('Ch1', 0))}|{int(rcvalues.get('Ch2', 0))}\n"
+                arduino.write(ws.encode())
                 if dist < 50:
                     print("PROXIMITY")
             elif ch3_value > 2000:
                 rcmode = 'Auto'
+                ws = f"{int(tback)}|{int(pback)}|{int(pback)}|1500\n"
+                arduino.write(ws.encode())
                 if dist < 50:
                     print("PROX")
 
