@@ -12,8 +12,8 @@ except Exception as e:
     print(f"Error loading model: {e}")
     raise
 
-#source = 0
-source = 'https://www.youtube.com/watch?v=tTUwmi0olXI'
+source = 0
+#source = 'https://www.youtube.com/watch?v=tTUwmi0olXI'
 print("Running inference on source:", source)
 
 # Initialize serial connection
