@@ -16,6 +16,14 @@ source = 0
 #source = 'https://www.youtube.com/watch?v=tTUwmi0olXI'
 print("Running inference on source:", source)
 
+# Target Geometry input rectangle dimensions
+xbound = 640
+ybound = 480
+
+running = True
+
+
+
 # Initialize serial connection
 arduino = serial.Serial(
     port='/dev/ttyUSB0',
@@ -46,14 +54,19 @@ def read_latest_serial_data(serial_port):
             buffer = ""  # Clear buffer on decode error
     return ""
 
-def movePanTilt(targetX, targetY, panMin=20, panMax=160, tiltMin=15, tiltMax=90):
-    panOut = panMax - ((targetX / xbound) * (panMax - panMin))
-    tiltOut = (targetY / ybound) * (tiltMax - tiltMin)
+def movePanTilt(targetX, targetY, panMin=1800, panMax=1200, tiltMin=15, tiltMax=90, xbound=640, ybound=480):
+    # Calculate panOut with reverse scaling
+    panOut = panMax + ((targetX / xbound) * (panMin - panMax))
+    
+    # Calculate tiltOut normally
+    tiltOut = (targetY / ybound) * (tiltMax - tiltMin) + tiltMin
 
-    panOut = max(min(panOut, panMax), panMin)
-    tiltOut = max(min(tiltOut, tiltMax), tiltMin)
+    # Clamp the values to their respective min and max
+    panOut = max(min(panOut, max(panMin, panMax)), min(panMin, panMax))
+    tiltOut = max(min(tiltOut, max(tiltMin, tiltMax)), min(tiltMin, tiltMax))
 
     return panOut, tiltOut
+
 
 def mapPWMtoThrottle(value, in_min=987, in_max=2012, out_min=-1, out_max=1):
     return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
@@ -61,15 +74,12 @@ def mapPWMtoThrottle(value, in_min=987, in_max=2012, out_min=-1, out_max=1):
 def mapPWMtoAngle(value, in_min=987, in_max=2012, out_min=20, out_max=160):
     return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 
-# Target Geometry input rectangle dimensions
-xbound = 640
-ybound = 480
-
-running = True
-
 # Thread function for inference processing
 def process_inference():
     global running
+    pback = 90
+    tback = 0
+
     try:
         results = model(source, save=False, stream=True, imgsz=640, show=True, project=False, conf=0.5)
         for result in results:
@@ -77,8 +87,7 @@ def process_inference():
                 break
 
             detectcount = 0
-            pback = 90
-            tback = 0
+
 
             boxes = result.boxes
             for box in boxes:
@@ -127,15 +136,20 @@ def process_inference():
 
                     elif 1200 <= ch3_value <= 1600:
                         rcmode = 'Fly By Wire'
-                        print(rcmode)
+                        #print(rcmode)
+                        #if detectcount>0:
                         ws = f"{int(tback)}|{int(pback)}|{rcvalues.get('Ch1', 0)}|{rcvalues.get('Ch2', 0)}\n"
                         arduino.write(ws.encode())
                         if dist < 50:
                             print("PROXIMITY")
                     elif ch3_value > 2000:
                         rcmode = 'Auto'
-                        ws = f"{int(tback)}|{int(pback)}|{int(pback)}|1500\n"
-                        arduino.write(ws.encode())
+
+                        if (detectcount>0):
+                            st,dxx = movePanTilt(targetX, targetY, 1800,1200,15,90)
+                            print(rcmode,":",st)
+                            ws = f"{int(tback)}|{int(pback)}|{int(st)}\n"
+                            arduino.write(ws.encode())
                         if dist < 50:
                             print("PROX")
 
@@ -155,6 +169,7 @@ inference_thread.start()
 try:
     while True:
         time.sleep(1)
+        
 except KeyboardInterrupt:
     running = False
     inference_thread.join()
