@@ -1,6 +1,6 @@
-This project uses a Jetson Nano on a RC car to point a turret and drive towards a person detected on its camera. 
+This project uses a mini-PC mounted on a RC car to point a turret and drive towards objects detected on its camera. 
 
-The Jetson captures video from the webcam and uses Nvidia pre-trained models like TAO peoplenet-pruned object detection network.
+The PC/Jetson captures video from the webcam and uses pre-trained models (Nvidia peoplenet-pruned, YOLO v8 v11) object detection network.
 Jetson uses a PCA 9685 to control the turret and driving servos. Jetson points pan-tilt servos (turret) to first person detected.
 ESP32 reads PWM signal from RC receiver's 4 channels, each with PWM values. ESP32 converts RC values to a string and sends to USB serial console.
 Jetson reads serial data from USB and controls steering servos according to the 'mode' set by channel 3: 
