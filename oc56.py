@@ -5,7 +5,7 @@ import threading
 import time
 
 # PARAMETERS AND VARIABLES
-model_path = "yolov8n_openvino_model"
+model_path = "yolov8n.pt"
 try:
     model = YOLO(model_path)
 except Exception as e:
